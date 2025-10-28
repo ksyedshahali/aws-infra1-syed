@@ -1,0 +1,70 @@
+name: Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to run'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  id-token: write       # required for OIDC
+  contents: read        # to check out repo
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials from OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::679336465006:role/github-oidc
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.1.7"   # or any version you need
+
+      - name: Terraform Init
+        run: terraform init -reconfigure
+
+      - name: Terraform Action
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "plan" ]; then
+            terraform plan
+          elif [ "${{ github.event.inputs.action }}" == "apply" ]; then
+            terraform apply -auto-approve
+          elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve
+          else
+            echo "Unknown action: ${{ github.event.inputs.action }}"
+            exit 1
+          fi
+
+      - name: Export Private Key
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: |
+          echo "Exporting private key from Terraform outputs..."
+          terraform output -raw private_key_pem > private_key.pem || true
+          chmod 600 private_key.pem
+        shell: bash
+
+      # -------------------------
+      # Upload PEM as Artifact
+      # -------------------------
+      - name: Upload PEM key as artifact
+        if: ${{ github.event.inputs.action == 'apply' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ec2-private-key
+          path: private_key.pem
