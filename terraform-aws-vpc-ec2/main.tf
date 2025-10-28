@@ -118,3 +118,5 @@ resource "aws_instance" "this" {
     Name = "${var.project_name}-ec2"
   })
 }
+
+

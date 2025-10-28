@@ -79,6 +79,13 @@ variable "ingress_rules" {
       protocol    = "tcp"
       cidr_blocks = ["0.0.0.0/0"]
       description = "Allow SSH"
+    },
+    {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+      description = "Allow HTTP"
     }
   ]
 }
