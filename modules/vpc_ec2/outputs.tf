@@ -44,11 +44,6 @@ output "private_key_pem" {
   sensitive   = true
 }
 
-output "private_key_file_path" {
-  description = "Local file path where private key is saved"
-  value       = var.create_key_pair ? local_file.private_key[0].filename : null
-}
-
 # -------------------------
 # S3 Bucket
 # -------------------------

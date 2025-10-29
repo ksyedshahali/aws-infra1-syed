@@ -13,7 +13,7 @@ variable "vpc_cidr" {
   type        = string
 }
 
-variable "subnet_cidr" {
+variable "public_subnet_cidr" {
   description = "CIDR block for public subnet"
   type        = string
 }
@@ -51,7 +51,7 @@ variable "create_private_instance" {
 }
 
 variable "ingress_rules" {
-  description = "Ingress rules for security group"
+  description = "Ingress rules for dynamic security group"
   type = list(object({
     from_port   = number
     to_port     = number
@@ -64,7 +64,7 @@ variable "ingress_rules" {
       from_port   = 22
       to_port     = 22
       protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"] # Replace with your IP later
+      cidr_blocks = ["0.0.0.0/0"]
       description = "Allow SSH"
     },
     {

@@ -9,7 +9,7 @@ resource "aws_vpc" "this" {
 }
 
 # -------------------------
-# Public Subnet
+# Subnets
 # -------------------------
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.this.id
@@ -19,9 +19,6 @@ resource "aws_subnet" "public" {
   tags = merge(var.tags, { Name = "${var.project_name}-public-subnet" })
 }
 
-# -------------------------
-# Private Subnet
-# -------------------------
 resource "aws_subnet" "private" {
   count             = var.create_private_instance ? 1 : 0
   vpc_id            = aws_vpc.this.id
@@ -54,24 +51,23 @@ resource "aws_route_table_association" "public" {
 }
 
 # -------------------------
-# Security Group
+# Security Group for Public EC2 (Dynamic)
 # -------------------------
-# Security Group for Private EC2
-resource "aws_security_group" "private_sg" {
-  count  = var.create_private_instance ? 1 : 0
+resource "aws_security_group" "public_sg" {
   vpc_id = aws_vpc.this.id
-  name   = "${var.project_name}-private-sg"
+  name   = "${var.project_name}-public-sg"
 
-  # Allow SSH only from the public EC2
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    security_groups = [aws_security_group.this.id]  # public SG
-    description = "Allow SSH from public EC2 (Bastion)"
+  dynamic "ingress" {
+    for_each = var.ingress_rules
+    content {
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+      description = ingress.value.description
+    }
   }
 
-  # Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
@@ -79,14 +75,40 @@ resource "aws_security_group" "private_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.tags, {
-    Name = "${var.project_name}-private-sg"
-  })
+  tags = merge(var.tags, { Name = "${var.project_name}-public-sg" })
 }
 
+# -------------------------
+# Security Group for Private EC2 (Dynamic, optional)
+# -------------------------
+resource "aws_security_group" "private_sg" {
+  count  = var.create_private_instance ? 1 : 0
+  vpc_id = aws_vpc.this.id
+  name   = "${var.project_name}-private-sg"
+
+  dynamic "ingress" {
+    for_each = var.ingress_rules
+    content {
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+      description = ingress.value.description
+    }
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, { Name = "${var.project_name}-private-sg" })
+}
 
 # -------------------------
-# SSH Key Pair
+# Key Pair
 # -------------------------
 resource "tls_private_key" "this" {
   count     = var.create_key_pair ? 1 : 0
@@ -108,35 +130,33 @@ resource "local_file" "private_key" {
 }
 
 # -------------------------
-# Public EC2 Instance
+# Public EC2
 # -------------------------
 resource "aws_instance" "public" {
-  ami                    = var.ami_id
-  instance_type          = var.instance_type
-  subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.this.id]
-  key_name               = var.create_key_pair ? aws_key_pair.this[0].key_name : var.existing_key_name
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.public_sg.id]
+  key_name                    = var.create_key_pair ? aws_key_pair.this[0].key_name : var.existing_key_name
   associate_public_ip_address = true
+
   tags = merge(var.tags, { Name = "${var.project_name}-public-ec2" })
 }
 
 # -------------------------
-# Private EC2 Instance 
+# Private EC2
 # -------------------------
 resource "aws_instance" "private" {
-  count                   = var.create_private_instance ? 1 : 0
-  ami                     = var.ami_id
-  instance_type           = var.instance_type
-  subnet_id               = aws_subnet.private[0].id
-  vpc_security_group_ids  = [aws_security_group.private_sg.id]
-  key_name                = var.create_key_pair ? aws_key_pair.this[0].key_name : var.existing_key_name
+  count                      = var.create_private_instance ? 1 : 0
+  ami                        = var.ami_id
+  instance_type              = var.instance_type
+  subnet_id                  = aws_subnet.private[0].id
+  vpc_security_group_ids     = [aws_security_group.private_sg[0].id]
+  key_name                   = var.create_key_pair ? aws_key_pair.this[0].key_name : var.existing_key_name
   associate_public_ip_address = false
 
-  tags = merge(var.tags, {
-    Name = "${var.project_name}-private-ec2"
-  })
+  tags = merge(var.tags, { Name = "${var.project_name}-private-ec2" })
 }
-
 
 # -------------------------
 # S3 Bucket
@@ -152,7 +172,7 @@ resource "aws_s3_bucket_versioning" "versioning" {
 }
 
 resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket = aws_s3_bucket.this.id
+  bucket                  = aws_s3_bucket.this.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true

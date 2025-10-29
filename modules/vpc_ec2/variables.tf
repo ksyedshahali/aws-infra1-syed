@@ -13,18 +13,6 @@ variable "vpc_cidr" {
   type        = string
 }
 
-variable "enable_dns_support" {
-  description = "Enable DNS support in VPC"
-  type        = bool
-  default     = true
-}
-
-variable "enable_dns_hostnames" {
-  description = "Enable DNS hostnames in VPC"
-  type        = bool
-  default     = true
-}
-
 variable "public_subnet_cidr" {
   description = "CIDR block for the public subnet"
   type        = string
@@ -76,7 +64,7 @@ variable "create_private_instance" {
 }
 
 variable "ingress_rules" {
-  description = "Ingress rules for security group"
+  description = "Ingress rules for dynamic security group"
   type = list(object({
     from_port   = number
     to_port     = number
@@ -84,22 +72,7 @@ variable "ingress_rules" {
     cidr_blocks = list(string)
     description = string
   }))
-  default = [
-    {
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-      description = "Allow SSH"
-    },
-    {
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-      description = "Allow HTTP"
-    }
-  ]
+  default = []
 }
 
 variable "tags" {
