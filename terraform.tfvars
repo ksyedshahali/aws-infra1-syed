@@ -6,9 +6,8 @@ private_subnet_cidr   = "10.0.2.0/24"
 availability_zone     = "us-east-1a"
 ami_id                = "ami-0c02fb55956c7d316"
 
-
-instance_type         = "t2.micro"
-create_key_pair       = true
+instance_type          = "t2.micro"
+create_key_pair        = true
 create_private_instance = true
 
 ingress_rules = [
@@ -25,6 +24,13 @@ ingress_rules = [
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow HTTP"
+  },
+  {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow Tomcat"
   }
 ]
 
