@@ -1,22 +1,43 @@
 # -------------------------
-# Outputs
+# VPC
 # -------------------------
 output "vpc_id" {
   value = aws_vpc.this.id
 }
 
-output "subnet_id" {
-  value = aws_subnet.this.id
+# -------------------------
+# Subnets
+# -------------------------
+output "public_subnet_id" {
+  value = aws_subnet.public.id
 }
 
-output "instance_id" {
-  value = aws_instance.this.id
+output "private_subnet_id" {
+  value = var.create_private_instance ? aws_subnet.private[0].id : null
 }
 
-output "public_ip" {
-  value = aws_instance.this.public_ip
+# -------------------------
+# EC2 Instances
+# -------------------------
+output "public_ec2_id" {
+  value = aws_instance.public.id
 }
 
+output "public_ec2_ip" {
+  value = aws_instance.public.public_ip
+}
+
+output "private_ec2_id" {
+  value = var.create_private_instance ? aws_instance.private[0].id : null
+}
+
+output "private_ec2_ip" {
+  value = var.create_private_instance ? aws_instance.private[0].private_ip : null
+}
+
+# -------------------------
+# Key Pair
+# -------------------------
 output "private_key_pem" {
   description = "Private key PEM content if key pair was created"
   value       = var.create_key_pair ? tls_private_key.this[0].private_key_pem : null
@@ -26,4 +47,11 @@ output "private_key_pem" {
 output "private_key_file_path" {
   description = "Local file path where private key is saved"
   value       = var.create_key_pair ? local_file.private_key[0].filename : null
+}
+
+# -------------------------
+# S3 Bucket
+# -------------------------
+output "s3_bucket_name" {
+  value = aws_s3_bucket.this.bucket
 }

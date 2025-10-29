@@ -25,9 +25,15 @@ variable "enable_dns_hostnames" {
   default     = true
 }
 
-variable "subnet_cidr" {
-  description = "CIDR block for the subnet"
+variable "public_subnet_cidr" {
+  description = "CIDR block for the public subnet"
   type        = string
+}
+
+variable "private_subnet_cidr" {
+  description = "CIDR block for the private subnet"
+  type        = string
+  default     = null
 }
 
 variable "availability_zone" {
@@ -36,7 +42,7 @@ variable "availability_zone" {
 }
 
 variable "map_public_ip_on_launch" {
-  description = "Map public IP to instances on launch"
+  description = "Map public IP to instances on launch for the subnet"
   type        = bool
   default     = true
 }
@@ -61,6 +67,12 @@ variable "existing_key_name" {
   description = "Existing key name if not creating a new one"
   type        = string
   default     = null
+}
+
+variable "create_private_instance" {
+  description = "Whether to create an EC2 in the private subnet"
+  type        = bool
+  default     = false
 }
 
 variable "ingress_rules" {

@@ -1,12 +1,1 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "6.17.0"
-    }
-  }
-}
-
-provider "aws" {
-  region     = var.aws_region
-}
+# Module uses the provider from root, no provider block needed here

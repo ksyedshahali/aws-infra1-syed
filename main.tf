@@ -1,44 +1,24 @@
-# ========================================================
-# Root Terraform Configuration - AWS Infrastructure + S3
-# ========================================================
+provider "aws" {
+  region = "us-east-1"
+}
 
 module "vpc_ec2" {
-  source = "./modules/terraform-aws-vpc-ec2"
+  source = "./modules/vpc_ec2"
 
-  vpc_cidr          = var.vpc_cidr
-  subnet_cidr       = var.subnet_cidr
-  availability_zone = var.availability_zone
-  instance_type     = var.instance_type
-  create_key_pair   = var.create_key_pair
-  project_name      = var.project_name
-  ami_id            = var.ami_id
-  aws_region        = var.aws_region
-}
-
-
-# ========================================================
-# S3 Bucket new one
-# ========================================================
-
-resource "aws_s3_bucket" "this" {
-  bucket = "${var.project_name}-bucket"
-  tags   = var.tags
-}
-
-resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.this.id
-  versioning_configuration {
-    status = "Enabled"
+  aws_region               = "us-east-1"
+  project_name             = "myproject"
+  vpc_cidr                 = "10.0.0.0/16"
+  public_subnet_cidr       = "10.0.1.0/24"
+  private_subnet_cidr      = "10.0.2.0/24"
+  availability_zone        = "us-east-1a"
+  ami_id                   = "ami-0c02fb55956c7d316" # Example Amazon Linux 2
+  instance_type            = "t2.micro"
+  create_key_pair           = true
+  create_private_instance   = true
+  s3_bucket_name            = "cmdstk-terrafrom-syed-1"
+  tags = {
+    Environment = "Dev"
+    Project     = "TerraformAssignment"
+    Owner       = "syed1"
   }
 }
-
-resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket = aws_s3_bucket.this.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-

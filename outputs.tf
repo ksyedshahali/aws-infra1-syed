@@ -1,5 +1,5 @@
 # ========================================================
-# Root Outputs (clean, unique)
+# Terraform Outputs
 # ========================================================
 
 output "vpc_id" {
@@ -7,8 +7,8 @@ output "vpc_id" {
   value       = module.vpc_ec2.vpc_id
 }
 
-output "subnet_id" {
-  description = "The ID of the created subnet"
+output "public_subnet_id" {
+  description = "The ID of the public subnet"
   value       = module.vpc_ec2.subnet_id
 }
 
