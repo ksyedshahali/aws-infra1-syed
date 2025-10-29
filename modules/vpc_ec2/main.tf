@@ -118,16 +118,17 @@ resource "tls_private_key" "this" {
 
 resource "aws_key_pair" "this" {
   count      = var.create_key_pair ? 1 : 0
-  key_name   = "${var.project_name}-key-2.0"
+ key_name = "${var.project_name}-key-${timestamp()}"
   public_key = tls_private_key.this[0].public_key_openssh
 }
 
 resource "local_file" "private_key" {
-  count          = var.create_key_pair ? 1 : 0
-  content        = tls_private_key.this[0].private_key_pem
-  filename       = "${path.module}/${var.project_name}-key-2.0.pem"
+  count           = var.create_key_pair ? 1 : 0
+  content         = tls_private_key.this[0].private_key_pem
+  filename = "${path.module}/${var.project_name}-key-${timestamp()}.pem"
   file_permission = "0600"
 }
+
 
 # -------------------------
 # Public EC2
